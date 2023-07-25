@@ -1,0 +1,22 @@
+[package]
+name = "bb_status"
+version = "0.1.0"
+edition = "2021"
+authors = ["Davi Feliciano <dfeliciano37@gmail.com>"]
+description = "Crawler para acompanhamento das convocações do concurso público do Banco do Brasil de 2022"
+readme = "README.md"
+repository = "https://github.com/davifeliciano/bb_status"
+license-file = "LICENSE"
+keywords = ["Web Crawler", "CLI", "Banco do Brasil", "Concurso Público"]
+categories = ["command-line-utilities", "email"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-std = "1.12.0"
+chromiumoxide = "0.5.0"
+chrono = "0.4.26"
+clap = { version = "4.3.19", features = ["derive"] }
+futures = "0.3.28"
+regex = "1.9.1"
+text-colorizer = "1.0.0"
