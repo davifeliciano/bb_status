@@ -18,5 +18,6 @@ chromiumoxide = "0.5.0"
 chrono = "0.4.26"
 clap = { version = "4.3.19", features = ["derive"] }
 futures = "0.3.28"
+lettre = { version = "0.10.4", features = ["smtp-transport"] }
 regex = "1.9.1"
 text-colorizer = "1.0.0"
