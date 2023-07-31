@@ -38,44 +38,84 @@ necessário habilitar a verificação de duas etapas e gerar uma
 [senha de aplicativo](https://support.google.com/accounts/answer/185833)
 para usar em `BB_SMTP_PWD`. Já o servidor será `BB_SMTP_SERVER="smtp.gmail.com"`.
 
-## Automação com crond
+## Automação com systemd
 
-A execução do programa pode ser automatizada com o uso de do serviço crond.
-Primeiro, tenha certeza de que o serviço está em execução com
+A execução do programa pode ser automatizada com a criação de um serviço.
+Primeiro, crie o arquivo `.service` em `~/.config/systemd/user` com o conteúdo
+abaixo.
 
-```bash
-$ sudo systemctl status crond
+```ini
+# ~/.config/systemd/user/bb_status.service
+[Unit]
+Description=bb_status mailer service
+After=network.target
+Wants=bb_status.timer
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/Imagens/bb_status
+ExecStart=/bin/sh -c 'bb_status <CPF> -o "$(date -I).png" -e <EMAIL>'
+
+[Install]
+WantedBy=default.target
 ```
 
-Caso não esteja, inicie com
+Para configurar o ambiente de serviços de um usuário, crie um arquivo `.conf` em `~/.config/environment.d` seguindo o formato abaixo.
 
-```bash
-$ sudo systemctl start crond
-```
-
-Em seguida, crie um arquivo crontab com
-
-```bash
-$ crontab -e
-```
-
-Esse comando abrirá tal arquivo para edição em um editor de linha de comando.
-Para realizar uma consulta periodicamente de segunda a sexta, às 10h, digite
-
-```bash
+```ini
+# ~/.config/environment.d/bb_status.conf
+PATH="$PATH:$HOME/.cargo/bin"
 BB_SMTP_USER="your_smtp_username@email.com"
 BB_SMTP_PWD="your_smtp_password"
 BB_SMTP_SERVER="smtp.server.com"
-OUTDIR="Imagens/bb_status"
-0 10 * * 1-5 .cargo/bin/bb_status <CPF> -o "$OUTDIR/bb_status_$(date +%Y%m%d).png" -e <EMAIL>
 ```
 
-e salve o arquivo. Note que as variáveis de ambiente com as configurações do
-servidor SMTP devem ser incluídas no arquivo, já que o crond roda o comando em
-um ambiente isolado. Por esse mesmo motivo rodamos o `bb_status` com
-`.cargo/bin/bb_status`, uma vez que, no ambiente usado, a variável `PATH` é mais
-restritiva.
+Para testar a execução do serviço, recarregue o daemon do systemd
 
-Em caso de sucesso, essa mesma linha deve aparecer na saída de `crontab -l` e
-uma mensagem indicando o carregamento do arquivo crontab será exibida nos logs
-do serviço, acessíveis via `sudo systemctl status crond`.
+```bash
+$ systemctl --user daemon-reload
+```
+
+e rode o serviço com
+
+```bash
+$ systemctl --user start bb_status.service
+```
+
+A saída do programa ou eventuais erros são acessíveis com
+
+```bash
+$ systemctl --user status bb_status.service
+```
+
+Para executar o serviço periodicamente, crie no mesmo diretório um arquivo
+`.timer` com o mesmo prefixo e seguinte conteúdo.
+
+```ini
+# ~/.config/systemd/user/bb_status.timer
+[Unit]
+Description=bb_status mailer service
+Requires=bb_status.service
+
+[Timer]
+Unit=bb_status.service
+OnCalendar=*-*-* 10:00:00
+
+[Install]
+WantedBy=timers.target
+```
+
+Aqui o campo `OnCalendar` controla quando o serviço `bb_status.service` será
+executado — no caso acima, diariamente às 10h. Recarregue o daemon do systemd
+novamente e ative o timer com
+
+```bash
+$ systemctl --user enable --now bb_status.timer
+```
+
+Em caso de sucesso, o timer, serviço correspondente, horário das última e
+próxima execuções serão listados na saída de
+
+```bash
+$ systemctl --user list-timers
+```
