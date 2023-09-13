@@ -1,5 +1,8 @@
 # bb_status
 
+> :warning: **DEPRECATED**: A inclusão de um CAPTCHA na página de consulta
+> impossibilitou a automação do crawler
+
 Crawler para acompanhamento das convocações do concurso público do Banco do
 Brasil de 2022. A aplicação levanta um processo filho executando uma instância
 do navegador Chromium na
